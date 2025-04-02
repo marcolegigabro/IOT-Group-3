@@ -1,28 +1,29 @@
 from influxdb_client import InfluxDBClient, WriteOptions
 import pandas as pd
 
-# Configuration de la connexion
-url = "http://tek-iot-c.sandbox.tek.sdu.dk:8086/"  # Remplace par l'URL de ton serveur InfluxDB
-token = "QtrjwTZV8Yl1w"  # Remplace par ton token d'authentification
-org = "cei"  # Remplace par ton organisation
-bucket = "weather"  # Remplace par ton bucket
+# Connection configuration
+url = "http://tek-iot-c.sandbox.tek.sdu.dk:8086/"  # Replace with your InfluxDB server URL
+token = "QtrjwTZV8Yl1w"  # Replace with your authentication token
+org = "cei"  # Replace with your organization
+bucket = "weather"  # Replace with your bucket
 
-# Connexion à InfluxDB
+# Connecting to InfluxDB
 client = InfluxDBClient(url=url, token=token, org=org)
 
-# Vérification de la connexion
+# Connection health check
 try:
     health = client.health()
-    print(f"Statut de la connexion : {health.status}")
+    print(f"Connection status: {health.status}")
 except Exception as e:
-    print(f"Erreur de connexion : {e}")
+    print(f"Connection error: {e}")
 
-# Récupération des données avec la requête Flux
-time_range_start = "-30d"  
-time_range_stop = "now()" 
-window_period = "5m"  
+# Retrieving data using a Flux query
+time_range_start = "-1y"  # Data from the last 30 days
+time_range_stop = "now()"  # Up to the current time
+window_period = "5m"  # Aggregation window of 5 minutes
 
-# Requête Flux corrigée
+# Corrected Flux query
+# Reference: https://www.youtube.com/watch?v=cMkQXLCbFQY
 query = f'''
 from(bucket: "{bucket}")
   |> range(start: {time_range_start}, stop: {time_range_stop})
@@ -31,32 +32,26 @@ from(bucket: "{bucket}")
   |> filter(fn: (r) => r["country"] == "DK")
   |> aggregateWindow(every: {window_period}, fn: mean, createEmpty: false)
   |> yield(name: "mean")
+  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
 '''
 
-# Récupérer les données dans un DataFrame
+# Retrieve data into a DataFrame
 df = client.query_api().query_data_frame(query)
-print(df)
+df = df[0]
+df = df.drop(columns=['_start', '_stop', 'result', 'table'])  # Remove unnecessary columns
+df = df.set_index('_time')  # Set the time column as the index
 
-# Préparer les données  # Supprimer les colonnes inutiles
-df.set_index('_time', inplace=True)  # Utiliser la colonne _time comme index
+# Writing connection
 
-df_clean=df.drop(columns=['_start', '_stop', 'result','table'])# Réinitialiser l'index pour avoir _time comme colonne
+_write_client = client.write_api()
+_write_client.write('test2', 
+                    data_frame_measurement_name="humidity2", 
+                    record=df,
+                    data_frame_tag_columns=["country", "neighborhood", "station_id", 'unit']
+                    )
 
-# Connexion pour l'écriture
-write_api = client.write_api(write_options=WriteOptions(batch_size=1))  # Write mode
+print("✅ ")
 
-# Écrire les données dans InfluxDB
-write_api.write(
-    bucket=bucket,
-    org=org,
-    record=df_clean,
-    data_frame_measurement_name="humidity",  # Utiliser "humidity" comme nom de la mesure
-    data_frame_tag_columns=["country", "neighborhood", "station_id",'unit'],  # Colonnes utilisées comme tags
-     # Utiliser la colonne "_time" pour les timestamps
-)
-
-print("✅ Données écrites dans InfluxDB")
-
-# Fermer la connexion
-print("Fermeture de la connexion...")
+# Closing the connection
+print("Closing connection...")
 client.close()
