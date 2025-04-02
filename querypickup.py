@@ -41,16 +41,35 @@ for query in queries:
     df = client.query_api().query_data_frame(query)
     if type(df) != list:
         if not df.empty:
-            df = df.drop(columns=['_start', '_stop', 'result', 'table'], errors='ignore')
+            df = df.drop(columns=['_start', '_stop', 'result', 'table', 'topic', 'gateway_type', 'building', 'sensor_type', 'source', 'room', 'floor', 'gateway', 'sensor', '_measurement'], errors='ignore')
             df = df.set_index('_time')
             L.append(df)
     else:
-        df = df[0]
-        df = df.drop(columns=['_start', '_stop', 'result', 'table'], errors='ignore')
-        df = df.set_index('_time')
-        L.append(df)
+        for dataset in df:
+        
+            dataset = dataset.drop(columns=['_start', '_stop', 'result', 'table', 'topic', 'gateway_type', 'building', 'sensor_type', 'source', 'room', 'floor', 'gateway', 'sensor', '_measurement'], errors='ignore')
+            dataset = dataset.set_index('_time')
+            L.append(dataset)
 
-print(L)
+df_final = L[0]
+
+i = 0
+for df in L[1:]:
+    i += 1
+    df_final = pd.merge(df_final, df, on="_time", how="outer",  suffixes=(f'_{i-1}', f'_{i}'))
+
+df_final = df_final.dropna()
+df_final = df_final.drop_duplicates()
+
+column_sets = [set(df.columns) for df in L]
+
+# Find common and unique columns
+common_columns = set.intersection(*column_sets)
+unique_columns = set.union(*column_sets)
+
+print("Common columns:", common_columns)
+print("All unique columns:", unique_columns)
+
 # Closing the connection
 print("Closing connection...")
 client.close()
