@@ -70,6 +70,8 @@ unique_columns = set.union(*column_sets)
 print("Common columns:", common_columns)
 print("All unique columns:", unique_columns)
 
+df_final.to_csv('./data.csv',index=True)
+
 # Closing the connection
 print("Closing connection...")
 client.close()
