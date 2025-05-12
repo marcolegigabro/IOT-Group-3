@@ -2,9 +2,10 @@ from(bucket: "sensor")
   |> range(start: TIME_RANGE_START, stop: TIME_RANGE_STOP)
   |> filter(fn: (r) => r["_measurement"] == "66a37cc69a4ead4ef37c5479")
   |> filter(fn: (r) => r["_field"] == "occupancy")
-  |> map(fn: (r) => ({ r with _value: if r._value then 1 else 0 }))  // Convert boolean to integer
+  |> map(fn: (r) => ({ r with _value: if r._value then 1 else 0 }))
   |> aggregateWindow(every: WINDOW_PERIOD, fn: max, createEmpty: false)
   |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+  |> keep(columns: ["occupancy", "_time"])
 
 ---
 from(bucket: "sensor")
@@ -12,5 +13,15 @@ from(bucket: "sensor")
   |> filter(fn: (r) => r["_measurement"] == "66a37cc69a4ead4ef37c5479")
   |> filter(fn: (r) => r["_field"] == "temperature")
   |> aggregateWindow(every: WINDOW_PERIOD, fn: mean, createEmpty: false)
-  |> yield(name: "mean")
   |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+  |> keep(columns: ["_time", "temperature"])
+  |> yield(name: "mean")
+
+---
+from(bucket: "weather")
+  |> range(start: TIME_RANGE_START, stop: TIME_RANGE_STOP)
+  |> filter(fn: (r) => r["_measurement"] == "precip_rate")
+  |> aggregateWindow(every: WINDOW_PERIOD, fn: mean, createEmpty: false)
+  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+  |> keep(columns: ["_time", "precip_rate"])
+  |> yield(name: "mean")

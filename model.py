@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import lightgbm as lgb
 from sklearn.model_selection import train_test_split
-# TO BE MODIFY CHATGPT EXAMPLE 
 
 def make_prediction(df):
     df['_time'] = pd.to_datetime(df['_time'])
@@ -12,6 +11,10 @@ def make_prediction(df):
     last_week_df['_time'] += pd.Timedelta(days=7)
     return last_week_df
 
+
+
+# CHATGPT EXAMPLE
+# This script assumes you have a CSV file named "data.csv" with the necessary columns.
 # 1. Load data
 df = pd.read_csv("data.csv", index_col=0, parse_dates=True)
 df["mean_temperature"] = df[["temperature_3", "temperature_4"]].mean(axis=1)
