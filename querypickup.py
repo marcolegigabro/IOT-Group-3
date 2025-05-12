@@ -1,5 +1,6 @@
 from influxdb_client import InfluxDBClient, WriteOptions
 import pandas as pd
+from model import make_prediction
 
 # Connection configuration
 url = "http://tek-iot-c.sandbox.tek.sdu.dk:8086/"  # Replace with your InfluxDB server URL
@@ -28,11 +29,11 @@ with open("query.txt", "r") as f:
 
 L = []
 for query in queries:
-    query = query.strip()  # Remove extra spaces/newlines
+    query = query.strip()
     if not query:
         continue 
 
-    # Replace placeholders with actual values
+    
     query = query.replace("TIME_RANGE_START", time_range_start)
     query = query.replace("TIME_RANGE_STOP", time_range_stop)
     query = query.replace("WINDOW_PERIOD", window_period)
@@ -71,6 +72,18 @@ print("Common columns:", common_columns)
 print("All unique columns:", unique_columns)
 
 df_final.to_csv('./data.csv',index=True)
+
+df_to_push = make_prediction(df_final)
+
+
+_write_client = client.write_api()
+_write_client.write('test2',
+                    data_frame_measurement_name="prediction", 
+                    record=df_to_push,
+                    data_frame_tag_columns=["country", "neighborhood", "station_id", 'unit'] #TODO
+                    )
+
+print("Writen!!")
 
 # Closing the connection
 print("Closing connection...")

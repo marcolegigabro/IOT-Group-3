@@ -4,6 +4,14 @@ import lightgbm as lgb
 from sklearn.model_selection import train_test_split
 # TO BE MODIFY CHATGPT EXAMPLE 
 
+def make_prediction(df):
+    df['_time'] = pd.to_datetime(df['_time'])
+    latest_time = df['_time'].max()
+    one_week_ago = latest_time - pd.Timedelta(days=7)
+    last_week_df = df[df['_time'] > one_week_ago].copy()
+    last_week_df['_time'] += pd.Timedelta(days=7)
+    return last_week_df
+
 # 1. Load data
 df = pd.read_csv("data.csv", index_col=0, parse_dates=True)
 df["mean_temperature"] = df[["temperature_3", "temperature_4"]].mean(axis=1)
