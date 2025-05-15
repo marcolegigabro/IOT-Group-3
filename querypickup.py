@@ -19,8 +19,8 @@ except Exception as e:
     print(f"Connection error: {e}")
 
 # Retrieving data using a Flux query
-time_range_start = "-7d"  # Data from the last 30 days
-time_range_stop = "now()"  # Up to the current time
+time_range_start = "-45d"  # Data from the last 30 days
+time_range_stop = "-7d"  # Up to the current time
 window_period = "5m"  # Aggregation window of 5 minutes
 
 # We can query here the data we want to use for prediction
@@ -77,14 +77,15 @@ print("Common columns:", common_columns)
 print("All unique columns:", unique_columns)
 
 print(df_final.columns)
-df_final.to_csv("test7days.csv")
 
+df_final.to_csv('antoineangry.csv', index=False)
+df_final = df_final.groupby('_time').mean().reset_index()
 df_to_push = make_prediction(df_final)
 
 
 _write_client = client.write_api()
 _write_client.write('test2',
-                    data_frame_measurement_name="prediction", 
+                    data_frame_measurement_name="prediction2", 
                     record=df_to_push,
                     data_frame_timestamp_column='_time'
                     )
