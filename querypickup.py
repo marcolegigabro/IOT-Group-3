@@ -19,7 +19,7 @@ except Exception as e:
     print(f"Connection error: {e}")
 
 # Retrieving data using a Flux query
-time_range_start = "-3mo"  # Data from the last 30 days
+time_range_start = "-3d"  # Data from the last 30 days
 time_range_stop = "now()"  # Up to the current time
 window_period = "5m"  # Aggregation window of 5 minutes
 
@@ -78,7 +78,7 @@ print("Common columns:", common_columns)
 print("All unique columns:", unique_columns)
 
 print(df_final.columns)
-df_final.to_csv("train.csv")
+df_final.to_csv("train7days.csv")
 
 df_to_push = make_prediction(df_final)
 
