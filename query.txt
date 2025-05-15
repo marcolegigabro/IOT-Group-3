@@ -37,7 +37,6 @@ from(bucket: "sensor")
   |> yield(name: "mean")
 
 ---
-
 from(bucket: "sensor")
   |> range(start: TIME_RANGE_START, stop: TIME_RANGE_STOP)
   |> filter(fn: (r) => r["_measurement"] == "66a37cc69a4ead4ef37c5479")
