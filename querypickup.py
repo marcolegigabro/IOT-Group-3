@@ -19,7 +19,7 @@ except Exception as e:
     print(f"Connection error: {e}")
 
 # Retrieving data using a Flux query
-time_range_start = "-30d"  # Data from the last 30 days
+time_range_start = "-3mo"  # Data from the last 30 days
 time_range_stop = "now()"  # Up to the current time
 window_period = "5m"  # Aggregation window of 5 minutes
 
@@ -40,13 +40,13 @@ for query in queries:
 
     query = query.replace("TIME_RANGE_START", time_range_start)
     query = query.replace("TIME_RANGE_STOP", time_range_stop)
-    query = query.replace("WINDOW_PERIOD", window_period)
+    query = query.replace("WINDOW_PERIOD", window_period) 
     
     print("Executing query:\n", query)
     df = client.query_api().query_data_frame(query)
     if type(df) != list:
         if not df.empty:
-            print(dataset.columns)
+            print(df.columns)
             df = df.drop(columns=['result', 'table'], errors='ignore')
             L.append(df)
     else:
@@ -78,6 +78,7 @@ print("Common columns:", common_columns)
 print("All unique columns:", unique_columns)
 
 print(df_final.columns)
+df_final.to_csv("train.csv")
 
 df_to_push = make_prediction(df_final)
 

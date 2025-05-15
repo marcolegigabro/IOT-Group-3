@@ -25,3 +25,24 @@ from(bucket: "weather")
   |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
   |> keep(columns: ["_time", "precip_rate"])
   |> yield(name: "mean")
+
+---
+from(bucket: "sensor")
+  |> range(start: TIME_RANGE_START, stop: TIME_RANGE_STOP)
+  |> filter(fn: (r) => r["_measurement"] == "66a37cc69a4ead4ef37c5479")
+  |> filter(fn: (r) => r["_field"] == "humidity")
+  |> aggregateWindow(every: WINDOW_PERIOD, fn: mean, createEmpty: false)
+  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+  |> keep(columns: ["_time", "humidity"])
+  |> yield(name: "mean")
+
+---
+
+from(bucket: "sensor")
+  |> range(start: TIME_RANGE_START, stop: TIME_RANGE_STOP)
+  |> filter(fn: (r) => r["_measurement"] == "66a37cc69a4ead4ef37c5479")
+  |> filter(fn: (r) => r["_field"] == "co2")
+  |> aggregateWindow(every: WINDOW_PERIOD, fn: mean, createEmpty: false)
+  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+  |> keep(columns: ["_time", "co2"])
+  |> yield(name: "mean")
