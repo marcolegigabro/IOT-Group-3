@@ -19,7 +19,7 @@ except Exception as e:
     print(f"Connection error: {e}")
 
 # Retrieving data using a Flux query
-time_range_start = "-3d"  # Data from the last 30 days
+time_range_start = "-7d"  # Data from the last 30 days
 time_range_stop = "now()"  # Up to the current time
 window_period = "5m"  # Aggregation window of 5 minutes
 
@@ -65,7 +65,6 @@ for df in L[1:]:
     i += 1
     df_final = pd.merge(df_final, df, on="_time", how="outer",  suffixes=(f'_{i-1}', f'_{i}'))
 
-df_final = df_final.dropna() # Can be done in the query itself
 df_final = df_final.drop_duplicates()
 
 column_sets = [set(df.columns) for df in L]
@@ -78,7 +77,7 @@ print("Common columns:", common_columns)
 print("All unique columns:", unique_columns)
 
 print(df_final.columns)
-df_final.to_csv("train7days.csv")
+df_final.to_csv("test7days.csv")
 
 df_to_push = make_prediction(df_final)
 
