@@ -1,61 +1,47 @@
-import pandas as pd
-import numpy as np
-import lightgbm as lgb
-from sklearn.model_selection import train_test_split
+import pandas as pd 
+from sklearn.ensemble import RandomForestRegressor  
 
-def make_prediction(df):
-    df['_time'] = pd.to_datetime(df['_time'])
-    latest_time = df['_time'].max()
-    one_week_ago = latest_time - pd.Timedelta(days=7)
-    last_week_df = df[df['_time'] > one_week_ago].copy()
-    last_week_df['_time'] += pd.Timedelta(days=7)
-    return last_week_df
+def make_prediction(df, freq='5min', forecast_days=7):
+    df = df.dropna(subset=['occupancy', 'temperature'])
+    df['_time'] = pd.to_datetime(df['_time'], format='mixed', utc=True, errors='coerce')
+    df = df.dropna(subset=['_time'])
+    df['_time'] = df['_time'].dt.tz_convert(None)
 
+    # Features temporelles
+    df['minute'] = df['_time'].dt.minute
+    df['hour'] = df['_time'].dt.hour
+    df['dayofweek'] = df['_time'].dt.dayofweek
 
+    # On prépare X et y pour les deux cibles
+    features = ['minute', 'hour', 'dayofweek']
+    X = df[features]
+    y_occ = df['occupancy']
+    y_temp = df['temperature']
 
-# CHATGPT EXAMPLE
-# This script assumes you have a CSV file named "data.csv" with the necessary columns.
-# 1. Load data
-df = pd.read_csv("data.csv", index_col=0, parse_dates=True)
-df["mean_temperature"] = df[["temperature_3", "temperature_4"]].mean(axis=1)
-df_model = df[["occupancy", "mean_temperature"]].resample("15T").mean()
+    # Modèles
+    model_occ = RandomForestRegressor()
+    model_temp = RandomForestRegressor()
+    model_occ.fit(X, y_occ)
+    model_temp.fit(X, y_temp)
 
-# 2. Feature engineering
-df_model["hour"] = df_model.index.hour
-df_model["minute"] = df_model.index.minute
-df_model["dayofweek"] = df_model.index.dayofweek
+    # Création des timestamps pour les 7 prochains jours
+    future_times = pd.date_range(start=df['_time'].max() + pd.Timedelta(freq), 
+                                 periods=int((pd.Timedelta(days=forecast_days) / pd.Timedelta(freq))), 
+                                 freq=freq)
 
-# 3. Drop NA rows (may exist after resampling)
-df_model.dropna(inplace=True)
+    # Création des features temporelles futures
+    future_df = pd.DataFrame({
+        '_time': future_times,
+        'minute': future_times.minute,
+        'hour': future_times.hour,
+        'dayofweek': future_times.dayofweek
+    })
 
-# 4. Prepare features and target
-X = df_model.drop(columns=["occupancy"])
-y = df_model["occupancy"]
+    # Prédiction
+    future_df['occupancy'] = model_occ.predict(future_df[features])
+    future_df['occupancy'] = (future_df['occupancy'] >= 0.5).astype(int)
 
-# 5. Train/test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.1)
+    future_df['temperature'] = model_temp.predict(future_df[features])
 
-# 6. Train LightGBM model
-model = lgb.LGBMRegressor()
-model.fit(X_train, y_train)
+    return future_df[['_time', 'occupancy', 'temperature']]
 
-# 7. Forecasting the next 7 days (672 points)
-future_index = pd.date_range(df_model.index[-1] + pd.Timedelta(minutes=15), periods=672, freq="15T")
-future_df = pd.DataFrame(index=future_index)
-future_df["hour"] = future_df.index.hour
-future_df["minute"] = future_df.index.minute
-future_df["dayofweek"] = future_df.index.dayofweek
-
-# Optionally, you can assume temperature stays constant or use your own temperature forecast
-future_df["mean_temperature"] = df_model["mean_temperature"].iloc[-96:].mean()  # mean of last 24h
-
-# 8. Predict
-future_df["predicted_occupancy"] = model.predict(future_df)
-
-# 9. Resulting forecast DataFrame
-result_df = future_df[["predicted_occupancy"]].copy()
-result_df.reset_index(inplace=True)
-result_df.rename(columns={"index": "timestamp"}, inplace=True)
-
-# 10. Preview or send to InfluxDB
-print(result_df.head())
