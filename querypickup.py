@@ -42,16 +42,13 @@ for query in queries:
     query = query.replace("TIME_RANGE_STOP", time_range_stop)
     query = query.replace("WINDOW_PERIOD", window_period) 
     
-    print("Executing query:\n", query)
     df = client.query_api().query_data_frame(query)
     if type(df) != list:
         if not df.empty:
-            print(df.columns)
             df = df.drop(columns=['result', 'table'], errors='ignore')
             L.append(df)
     else:
         for dataset in df:
-            print(dataset.columns)
             dataset = dataset.drop(columns=['result', 'table'], errors='ignore')
             L.append(dataset)
 print(L)
@@ -73,11 +70,6 @@ column_sets = [set(df.columns) for df in L]
 common_columns = set.intersection(*column_sets)
 unique_columns = set.union(*column_sets)
 
-print("Common columns:", common_columns)
-print("All unique columns:", unique_columns)
-
-print(df_final.columns)
-df_final.to_csv('antoineangry.csv', index=False)
 df_final = df_final.groupby('_time').mean().reset_index()
 df_to_push = make_prediction(df_final)
 
@@ -89,10 +81,7 @@ _write_client.write('test2',
                     data_frame_timestamp_column='_time'
                     )
 
-print("Writen!!")
 
-# Closing the connection
-print("Closing connection...")
 client.close()
 
 
