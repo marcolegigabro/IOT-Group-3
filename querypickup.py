@@ -80,7 +80,7 @@ for col in df_to_push.select_dtypes(include=['int', 'float']).columns:
     df_to_push[col] = df_to_push[col].astype(float)
 
 _write_client = client.write_api()
-_write_client.write('test2',
+_write_client.write('Project',
                     data_frame_measurement_name="predictionIA", 
                     record=df_to_push,
                     data_frame_timestamp_column='_time'
