@@ -58,7 +58,7 @@ def make_prediction(df, freq='5min', forecast_days=7):
 
 
 def get_weather():
-    # Coordonnées de la station météo Odense
+    # Odense lat long
     latitude = 55.366417
     longitude = 10.429611
 
