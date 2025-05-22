@@ -37,7 +37,7 @@ def make_prediction(df, freq='5min', forecast_days=7):
         features = ['minute', 'hour', 'dayofweek', 'precip_rate', 'temperatureext']
         future_df = pd.merge(
             future_df, 
-            df_weather.rename(columns={"time": "_time"})[['_time', 'temperature', 'precip_rate']], 
+            df_weather.rename(columns={"time": "_time"})[['_time', 'temperatureext', 'precip_rate']], 
             on='_time', 
             how='left'
         )

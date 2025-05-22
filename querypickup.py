@@ -81,7 +81,7 @@ for col in df_to_push.select_dtypes(include=['int', 'float']).columns:
 
 _write_client = client.write_api()
 _write_client.write('Project',
-                    data_frame_measurement_name="predictionIA", 
+                    data_frame_measurement_name="predictionIA2", 
                     record=df_to_push,
                     data_frame_timestamp_column='_time'
                     )
