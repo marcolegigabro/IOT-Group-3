@@ -9,7 +9,7 @@ org = "cei"  # Replace with your organization
 bucket = "weather"  # Replace with your bucket
 
 # Connecting to InfluxDB
-client = InfluxDBClient(url=url, token=token, org=org)
+client = InfluxDBClient(url=url, token=token, org=org, timeout=30000)
 
 # Connection health check
 try:
@@ -51,7 +51,7 @@ for query in queries:
         for dataset in df:
             dataset = dataset.drop(columns=['result', 'table'], errors='ignore')
             L.append(dataset)
-print(L)
+
 if L == []:
     print("No data found for the given time range.")
 else: 
@@ -71,8 +71,13 @@ common_columns = set.intersection(*column_sets)
 unique_columns = set.union(*column_sets)
 
 df_final = df_final.groupby('_time').mean().reset_index()
+df_final = df_final.rename(columns={
+    'temperature_4': 'temperature',
+    'temperature_5': 'temperatureext'
+})
 df_to_push = make_prediction(df_final)
-
+for col in df_to_push.select_dtypes(include=['int', 'float']).columns:
+    df_to_push[col] = df_to_push[col].astype(float)
 
 _write_client = client.write_api()
 _write_client.write('test2',
@@ -82,6 +87,7 @@ _write_client.write('test2',
                     )
 
 
+print("Data written successfully to InfluxDB! :D")
 client.close()
 
 

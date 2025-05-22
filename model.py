@@ -34,7 +34,7 @@ def make_prediction(df, freq='5min', forecast_days=7):
     if df_weather is None or df_weather.empty:
         features = ['minute', 'hour', 'dayofweek']
     else:
-        features = ['minute', 'hour', 'dayofweek', 'precip_rate', 'temperature']
+        features = ['minute', 'hour', 'dayofweek', 'precip_rate', 'temperatureext']
         future_df = pd.merge(
             future_df, 
             df_weather.rename(columns={"time": "_time"})[['_time', 'temperature', 'precip_rate']], 
@@ -77,7 +77,7 @@ def get_weather():
     # DF
     df_hourly = pd.DataFrame({
         "time": pd.to_datetime(data["hourly"]["time"]),
-        "temperature": data["hourly"]["temperature_2m"],
+        "temperatureext": data["hourly"]["temperature_2m"],
         "precip_rate": data["hourly"]["precipitation"],
         "humidity": data["hourly"]["relative_humidity_2m"],
         "wind_speed": data["hourly"]["windspeed_10m"]

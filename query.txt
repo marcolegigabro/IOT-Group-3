@@ -45,3 +45,11 @@ from(bucket: "sensor")
   |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
   |> keep(columns: ["_time", "co2"])
   |> yield(name: "mean")
+
+---
+from(bucket: "weather")
+  |> range(start: TIME_RANGE_START, stop: TIME_RANGE_STOP)
+  |> filter(fn: (r) => r["_measurement"] == "temperature")
+  |> aggregateWindow(every: WINDOW_PERIOD, fn: mean, createEmpty: false)
+  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+  |> keep(columns: ["_time", "temperature"])
