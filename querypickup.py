@@ -81,14 +81,16 @@ for col in df_to_push.select_dtypes(include=['int', 'float']).columns:
 
 _write_client = client.write_api()
 _write_client.write('Project',
-                    data_frame_measurement_name="predictionIA2", 
+                    data_frame_measurement_name="Prediction", 
                     record=df_to_push,
                     data_frame_timestamp_column='_time'
                     )
 
 
-print("Data written successfully to InfluxDB! :D")
+_write_client.flush()
+_write_client.close()
 client.close()
+print("Data written successfully to InfluxDB! :D")
 
 
 # crontab -e -> x x x x x to run it every x
