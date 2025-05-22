@@ -31,7 +31,7 @@ def make_prediction(df, freq='5min', forecast_days=7):
     df_weather = get_weather()
 
     
-    if df_weather == None or df_weather.empty:
+    if df_weather is None or df_weather.empty:
         features = ['minute', 'hour', 'dayofweek']
     else:
         features = ['minute', 'hour', 'dayofweek', 'precip_rate', 'temperature']
@@ -59,8 +59,8 @@ def make_prediction(df, freq='5min', forecast_days=7):
 
 def get_weather():
     # Coordonnées de la station météo Odense
-    latitude = 55.4038
-    longitude = 10.4024
+    latitude = 55.366417
+    longitude = 10.429611
 
     # parameter to get
     params = {
